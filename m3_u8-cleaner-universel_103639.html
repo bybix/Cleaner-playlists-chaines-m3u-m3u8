@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="conçu avec passion par bybix,(assisté par Copilot, l’IA GitHub 🤖) @2025">
+    <meta name="description" content="Tri de vos listes et chaines de type M3u/M3u8, playlists M3U affichage de la durée du titre ,Effacer,classer,editions, @2025.">
+  <title>M3U/M3U8 Cleaner Universel</title>
+  <style>
+    :root {
+      --main-bg: #0c0f17;
+      --main-txt: #dad5ff;
+      --menu-bg: #11151f;
+      --filter-bg: linear-gradient(90deg,#0d2b52,#1d3f6f 90%);
+      --card-bg: linear-gradient(#141a0d, #242536);
+      --border: #1976d2;
+      --accent: #63B8EE;
+      --highlight: #fff176;
+      --btn-green: #47e47d;
+      --btn-red: #e44747;
+    }
+    [data-theme="light"] {
+      --main-bg: #fafafa;
+      --main-txt: #212121;
+      --menu-bg: #f2f2f7;
+      --filter-bg: linear-gradient(90deg,#e0f7fa,#fffde7 90%);
+      --card-bg: linear-gradient(#fff,#e3f2fd 80%);
+      --border: #63b8ee;
+      --accent: #1976d2;
+      --highlight: #ffd54f;
+      --btn-green: #4caf50;
+      --btn-red: #e53935;
+    }
+    html, body {
+      background: var(--main-bg);
+      color: var(--main-txt);
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      transition: background .3s, color .3s;
+    }
+    .main-title {
+      text-align: center;
+      font-weight: bold;
+      font-size: 2em;
+      margin: 15px 0 10px 0;
+      word-break: break-word;
+    }
+    @media (max-width: 400px) {
+      .main-title {
+        font-size: 1.2em;
+        line-height: 1.2;
+      }
+    }
+    .hamburger {
+      display: inline-block;
+      font-size: 2em;
+      cursor: pointer;      
+      color: white;
+      border: none;
+      border-radius: 8px;
+      width: 46px;
+      height: 38px;
+      line-height: 38px;
+      text-align: center;
+      margin: 0 6px;
+      transition: background .18s;
+      vertical-align: middle;
+    }
+    .gris {background-image: -moz-linear-gradient(90deg, #5e704f, #d7d8d6);}
+    .rouge {background-image: -moz-linear-gradient(90deg, #d73939, #7853ad);}
+    .bleu {background-image: -moz-linear-gradient(90deg, #398bd7, #0b0e14);}
+  
+    .hamburger:hover { background: #1976d2; }
+
+    /* Hamburger menu popups */
+    .popup-menu {
+      display: none;
+      position: absolute;
+      top: 60px;
+      left: 10vw;
+      background: var(--filter-bg);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      min-width: 235px;
+      max-width: 90vw;
+      z-index: 50;
+      box-shadow: 0 10px 32px #0003;
+      padding: 14px 14px 10px 14px;
+    }
+    .popup-menu.visible { display: block; animation: fadeIn .15s;}
+    /* Bouton convertir */
+    .convertir {width:65px;height: 30px;border: 2px solid var(--border);
+      background-image: -moz-linear-gradient(90deg, #66735c, #f7f7f7); border-radius: 6px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-16px);} to { opacity: 1; } }
+    .popup-buttons {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-top: 9px;
+      justify-content: flex-start;
+    }
+    .popup-buttons button {
+      min-width: 90px;
+      padding: 7px 13px;
+      font-size: .97em;
+      font-weight: bold;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      margin-bottom: 7px;
+      transition: background .18s;
+    }
+    .popup-buttons .btn-browse { background: var(--accent); color: #fff;}
+    .popup-buttons .btn-import { background: var(--btn-green); color: #fff;}
+    .popup-buttons .btn-merge { background: var(--accent); color: #fff;}
+    .popup-buttons .btn-reset { background: var(--btn-red); color: #fff;}
+    .popup-buttons .btn-save { background: #333; color: #fff;}
+    .popup-buttons .btn-theme { background: var(--accent); color: #fff;}
+    .popup-buttons .btn-theme.active { background: #fed85a; color: #222;}
+    .popup-buttons .btn-save.on { background: #fed85a; color: #222;}
+    .file-list {
+      display: block;
+      background: linear-gradient(0deg, #B8FCED, #fafafa);
+      border: 1px solid #eed400;
+      color: #252525;
+      border-radius: 7px; margin: 8px 0 0 0; padding: 5px 10px;
+      max-width: 220px; min-width: 80px;
+      overflow-x: auto; font-size: .97em;
+      box-shadow: inset 0px 0px 1px rgb(0, 255, 100);
+      max-height: 60px;
+      overflow-y: auto;
+      white-space: pre-line;
+      scrollbar-color: var(--border) #e3f2fd;
+      scrollbar-width: thin;
+    }
+    .main-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      background: var(--menu-bg);
+      border-bottom: 2px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      padding: 8px 0 4px 0;
+      min-height: 56px;
+    }
+
+    .filters-section {
+      margin: 18px auto 0 auto;
+      padding: 16px 12px 14px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: var(--filter-bg);
+      max-width: 620px;
+      position: relative;
+    }
+    .filters-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0;
+      margin-bottom: 6px;
+    }
+    .filters-header .hamburger { font-size: 1.5em; width: 38px; height: 32px; line-height: 32px;}
+    .filters-box label, .copy-paste-box label {
+      display: block;
+      margin: 11px 0 5px 2px;
+      font-weight: bold;
+    }
+    .filters-box input, .copy-paste-box textarea {
+      width: 97%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 12px;
+      font-size: 1em;
+    }
+    .filters-actions {
+      display: flex;
+      gap: 11px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .filters-actions button {
+      min-width: 90px;
+      padding: 7px 15px;
+      font-size: .99em;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      background: var(--accent);
+      color: #fff;
+      transition: background .18s;
+    }
+    .filters-actions .btn-import { background: var(--btn-green);}
+    .filters-actions .btn-merge { background: var(--accent);}
+    .filters-actions .btn-reset { background: var(--btn-red);}
+    .filters-actions .btn-save { background: #333;}
+    .filters-actions .btn-save.on { background: #fed85a; color: #222;}
+    .filters-actions .btn-key { background: #fed85a; color: #222;}
+    .copy-paste-inline {
+      padding: 10px 0 0 0;
+      margin-top: 0;
+    }
+    .copy-paste-inline .copy-paste-buttons {
+      display: flex;
+      gap: 7px;
+      margin-top: 4px;
+    }
+    .copy-paste-inline button {
+      flex: 1 1 80px;
+      padding: 7px 0;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-weight: bold;
+      font-size: .98em;
+      cursor: pointer;
+      transition: background .18s;
+    }
+    .copy-paste-inline button:hover { background: #1976d2; }
+    .filters-section.collapsed .filters-box,
+    .filters-section.collapsed .copy-paste-inline { display: none; }
+    .filters-section.collapsed { padding-bottom: 0; min-height: 30px; transition:.2s;}
+    .filters-section .filters-header { margin-bottom: 0; }
+    .filters-section.collapsed .filters-header { margin-bottom: 0; }
+    .filters-section.collapsed .hamburger { transform: rotate(90deg);}
+    .container-flex { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 4px;}
+    .column { min-width: 240px; max-width: 380px; flex: 1 1 320px;}
+    .overflow {
+      max-height: 320px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--card-bg);
+      padding: 8px;
+      margin-bottom: 10px;
+      scrollbar-color: var(--border) #e3f2fd;
+      scrollbar-width: thin;
+    }
+    .overflow-content {
+      max-height: 320px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      resize: vertical;
+      background: var(--card-bg);
+      color: var(--main-txt);
+      padding: 7px;
+      scrollbar-color: var(--border) #e3f2fd;
+      scrollbar-width: thin;
+    }
+    .group-title {font-weight: bold; color: var(--border); margin: 9px 0 4px;}
+    .row-flex {display: flex; flex-wrap: wrap; gap: 4px;}
+    .trash {color:#90caf9;cursor:pointer;font-size:1.1em;padding-left:6px;}
+    .trash:hover {color:#1565c0;}
+    .highlight {background: var(--highlight); color: #b71c1c; font-weight:bold;}
+    .block-type-label {
+      display: inline-block;
+      font-size: 0.88em;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 7px;
+      margin-right: 7px;
+      margin-left: 2px;
+      vertical-align: middle;
+    }
+    .btn-country {background: #ffecb3; color: #a17700; border-color: #ffc107;;border: 1px solid #1976d2;  border-radius: 5px;}/*Pays */
+    .btn-tvgid { background: #c8e6c9;color: #1b5e20; border-color: #43a047;;border: 1px solid #1976d2;  border-radius: 5px;}
+    .btn-label { background: #b3e5fc; color: #01579b;  border-color: #039be5;;border: 1px solid #1976d2;  border-radius: 5px; }
+    .btn-group {display: inline-block;  margin: 3px 2px 3px 0;  padding: 5px 10px; background: #d1c4e9; color: #4a148c; border-color: #7e57c2;border: 1px solid #1976d2;  border-radius: 5px;}/* Bouton supprimer tout le Groupe */
+    .btn-delete {background: #ffcdd2;color: #b71c1c;border-color: #f44336;margin-left: 5px;font-weight: bold; }
+    .type-extinf { background: #ffe082; color: #b26a00; border:1px solid #ffc107;}
+    .type-stream { background: #b3e5fc; color: #01579b; border:1px solid #0288d1;}
+    .type-media  { background: #c8e6c9; color: #1b5e20; border:1px solid #388e3c;}
+    .line-num { color:#3599b8;background: linear-gradient(70deg, #ff8f00, white);user-select:none;display:inline-block;min-width:37px;text-align:right;margin-right:2px;}
+    .line-url {margin-left:54px;}
+    .line-editable:hover {background:#feb3ffa3;cursor:pointer;color:rgb(85, 90, 88);}
+    .line-editable.editing {background:#c4bc67a6;}
+    .input-edit {font-family:inherit;font-size:1em;padding:0 2px;border-radius:3px;border:1px solid #d23319;}
+    .edit-large {border:1px solid var(--border);width:98%;border-radius:4px;font-size:1.25em;padding:6px;}
+    .content-header {font-size:15px;color:var(--border);font-weight:bold;margin-bottom:7px;}
+    #successMsg {
+      display: none;
+      background: #eafbe7;
+      color: #217a2b;
+      border: 2px solid #2ecc40;
+      border-radius: 8px;
+      padding: 12px 18px;
+      margin: 10px 0 8px 0;
+      font-weight: bold;
+      font-size: 1.08em;
+      max-width: 490px;
+      text-align: center;
+      z-index: 100;
+      position: sticky;
+      top: 0;
+    }
+    @media (max-width: 900px) {
+      .container-flex {flex-direction:column;}
+      .column{max-width:98vw;}
+      .popup-menu { left: 4vw;}
+    }
+  </style>
+</head>
+<footer style="margin:30px auto 10px auto;text-align:center;opacity:.82;font-size:.97em;color:#aaa;">
+  <hr style="max-width:400px;">
+  <div>
+    <span style="font-weight:bold;color:#4b8cff;">M3U/M3U8 Cleaner Universel</span> — conçu avec passion par <b>bybix</b><br>
+    <span style="font-size:0.9em;">(assisté par Copilot, l’IA GitHub 🤖)</span>
+  </div>
+</footer>
+<body>
+  <div class="main-title" id="main-title">
+    <span class="pc">💻</span>
+    <span class="mobile">📳</span>
+    <span id="main-title-text">M3U/M3U8 Cleaner Universel</span>
+  </div>
+  <div class="main-bar">
+    <!-- Hamburger for actions -->
+    <button class="hamburger gris" id="hamburger-actions" title="Actions">&#9776;</button>
+    <div class="popup-menu" id="popup-actions">
+      <label style="font-weight:bold;">Actions</label>
+      <div class="popup-buttons">
+        <label class="btn-browse" style="background:var(--accent);color:#fff;padding:7px 15px; border-radius:6px;cursor:pointer;">
+          <input type="file" id="fileInput" name="file" style="display:none;" multiple />
+          Parcourir
+        </label>
+        <button class="btn-import" id="importBtn">Importer</button>
+        <button class="btn-merge" id="mergeBtn">Fusionner</button>
+        <button class="btn-save" id="toggleAutoSave">Sauvegarde auto : OFF</button>
+        <button class="btn-reset" id="resetBtn">Effacer</button>
+      </div>
+      <div class="file-list" id="fileList"></div>
+    </div>
+    <!-- Hamburger for theme -->
+    <button class="hamburger rouge" id="hamburger-theme" title="Thème">&#9776;</button>
+    <div class="popup-menu" id="popup-theme" style="left:auto;right:10vw;">
+      <label style="font-weight:bold;">Thème</label>
+      <div class="popup-buttons">
+        <button class="btn-theme" id="themeAutoBtn" data-theme="auto">Auto</button>
+        <button class="btn-theme" id="themeLightBtn" data-theme="light">Clair</button>
+        <button class="btn-theme" id="themeDarkBtn" data-theme="dark">Sombre</button>
+      </div>
+    </div>
+  </div>
+  <div id="successMsg"></div>
+  <!-- FILTRES + COPIER/COLLER + ACTIONS -->
+   
+  <div class="filters-section" id="filters-section">
+    <div class="filters-header">
+      <span style="font-weight:bold;font-size:1.1em;">Filtres & outils</span>
+      <button class="hamburger bleu" id="hamburger-filters" title="Afficher/Masquer">&#9776;</button>
+    </div>
+    <div class="filters-box">
+      <label for="keywordsInput">Mots-clés à supprimer :</label>
+      <input id="keywordsInput" placeholder="Saisir, séparés par virgules" onclick="this.select();">
+      <label for="unifiedSearchInput">Filtrage généralisé :</label>
+      <input id="unifiedSearchInput" placeholder="Pays, label, tvg-id, url, etc.">
+      <!--div class="filters-actions">
+        <button class="btn-import" id="importBtn2">Importer</button>
+        <button class="btn-merge" id="mergeBtn2">Fusionner</button>
+        <button class="btn-reset" id="resetBtn2">Effacer</button>
+        <button class="btn-save" id="toggleAutoSave2">Sauvegarde auto : OFF</button>
+        <button class="btn-key" id="cleanByKeyBtn">Supprimer mots-clés</button>
+      </div-->
+      <div style="margin:12px 0 4px 0;">
+  <label for="youtube-url"><b>Importer une playlist YouTube :</b></label>
+  <input type="url" id="youtube-url" placeholder="Collez l’URL d’une playlist YouTube ici" style="width:88%;padding:6px;border-radius:5px;">
+  <button class="convertir" onclick="openYouTubeM3U()">Convertir</button>
+  <span style="font-size:0.92em;color:#999;">(Conversion externe, puis collez ici le résultat)</span>
+</div>
+    </div>
+    <div class="copy-paste-inline">
+      <label for="copy-area">Copier/Coller votre playlist ici :</label>
+      <textarea id="copy-area" placeholder="Collez ou copiez votre texte ici..."></textarea>
+      <div class="copy-paste-buttons">
+        <button onclick="copyToClipboard()">Copier</button>
+        <button onclick="pasteFromClipboard()">Coller</button>
+        <button onclick="clearTextArea()">Effacer</button>
+      </div>
+    </div>
+  </div>
+  <div class="container-flex">
+    <div class="column">
+      <div class="group-title">Pays</div>
+      <div class="overflow" id="countriesList"></div>
+      <div class="group-title">tvg-id</div>
+      <div class="overflow" id="tvgidsList"></div>
+      <div class="group-title">Labels</div>
+      <div class="overflow" id="labelsList"></div>
+    </div>
+    <div class="column" style="flex:2 1 0;">
+      <div class="content-header">
+        <span id="lineCount"></span>
+      </div>
+      <div class="overflow-content" id="fileContent"></div>
+    </div>
+  </div>
+  <script>
+    // Fontion d'Appel du convertisseur externe ,ce qui permet de télécharger sa Playlist et d'éditer.
+    function openYouTubeM3U() {
+  let url = document.getElementById('youtube-url').value.trim();
+  if (!url) { alert('Colle une URL de playlist YouTube !'); return; }
+  // Redirige vers un convertisseur en passant l’URL
+  window.open('https://www.tunemymusic.com/fr/home?id=youtube-to-file/?url='+encodeURIComponent(url),'_blank');
+}
+    // Hamburger popups
+    function closeAllPopups() {
+      document.getElementById('popup-actions').classList.remove('visible');
+      document.getElementById('popup-theme').classList.remove('visible');
+    }
+    document.getElementById('hamburger-actions').onclick = function(e) {
+      closeAllPopups();
+      document.getElementById('popup-actions').classList.toggle('visible');
+    };
+    document.getElementById('hamburger-theme').onclick = function(e) {
+      closeAllPopups();
+      document.getElementById('popup-theme').classList.toggle('visible');
+    };
+    document.body.addEventListener('click', function(e) {
+      if (!e.target.closest('.hamburger') &&
+          !e.target.closest('.popup-menu')) closeAllPopups();
+    });
+
+    // Hamburger for filters
+    const filtersSection = document.getElementById('filters-section');
+    document.getElementById('hamburger-filters').onclick = function() {
+      filtersSection.classList.toggle('collapsed');
+    };
+
+    // Titre responsive
+    function adjustTitle() {
+      const t = document.getElementById('main-title-text');
+      if (!t) return;
+      t.innerHTML = window.innerWidth < 400 ? 'M3U/<br>M3U8 Cleaner' : 'M3U/M3U8 Cleaner Universel';
+    }
+    window.addEventListener('resize', adjustTitle);
+    adjustTitle();
+
+    // Copier / Coller logic
+    function copyToClipboard() {
+      const textarea = document.getElementById('copy-area');
+      textarea.select();
+      document.execCommand('copy');
+    }
+    function pasteFromClipboard() {
+      navigator.clipboard.readText().then(text => {
+        document.getElementById('copy-area').value = text;
+      });
+    }
+    function clearTextArea() {
+      document.getElementById('copy-area').value = '';
+    }
+
+    // THEME AUTO/CLAIR/SOMBRE
+    function setTheme(theme) {
+      if (theme === "auto") {
+        document.documentElement.removeAttribute("data-theme");
+        localStorage.setItem("theme", "auto");
+        applySystemTheme();
+      } else {
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("theme", theme);
+      }
+      updateThemeButtons();
+    }
+    function applySystemTheme() {
+      if (localStorage.getItem("theme") === "auto" || !localStorage.getItem("theme")) {
+        let dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+      }
+    }
+    function updateThemeButtons() {
+      let cur = localStorage.getItem("theme") || "auto";
+      ["themeAutoBtn","themeLightBtn","themeDarkBtn"].forEach(id=>{
+        let btn = document.getElementById(id);
+        if (btn) btn.classList.remove("active");
+      });
+      if(document.getElementById("themeAutoBtn") && cur==="auto") document.getElementById("themeAutoBtn").classList.add("active");
+      if(document.getElementById("themeLightBtn") && cur==="light") document.getElementById("themeLightBtn").classList.add("active");
+      if(document.getElementById("themeDarkBtn") && cur==="dark") document.getElementById("themeDarkBtn").classList.add("active");
+    }
+    ["themeAutoBtn","themeLightBtn","themeDarkBtn"].forEach(id => {
+      let btn = document.getElementById(id);
+      if(btn) btn.onclick = () => setTheme(btn.dataset.theme);
+    });
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applySystemTheme);
+    (()=>{ let t=localStorage.getItem("theme"); if(t==="dark"||t==="light") document.documentElement.setAttribute("data-theme",t); else applySystemTheme(); updateThemeButtons(); })();
+
+    // Fichiers (depuis les 2 menus)
+    let lastFileInput = document.getElementById('fileInput');
+    document.querySelectorAll('#fileInput').forEach(inp => {
+      inp.addEventListener('change', function() {
+        lastFileInput = this;
+        const flist = document.getElementById('fileList');
+        flist.innerHTML = "";
+        if (this.files.length > 0) {
+          let list = Array.from(this.files).map(f => `<div>${f.name}</div>`).join('');
+          flist.innerHTML = list;
+        }
+      });
+    });
+
+    // Réplique actions pour les 2 menus (popup et section)
+   /* function triggerAction(btnId) {
+      document.getElementById(btnId).click();
+    }
+    document.getElementById('importBtn2').onclick = () => triggerAction('importBtn');
+    document.getElementById('mergeBtn2').onclick = () => triggerAction('mergeBtn');
+    document.getElementById('resetBtn2').onclick = () => triggerAction('resetBtn');
+    document.getElementById('toggleAutoSave2').onclick = () => triggerAction('toggleAutoSave');*/
+
+    // ------- FONCTIONS M3U -------
+    let visibleBlocks = [];
+    let idMap = {};
+    let currentISOs = [];
+    let autoSave = false;
+    let currentUnifiedSearch = "";
+
+    const countryISO = [
+      {name:"France", iso:"FR"}, {name:"Espagne", iso:"ES"}, {name:"Belgique", iso:"BE"},
+      {name:"Suisse", iso:"CH"}, {name:"Italie", iso:"IT"}, {name:"Allemagne", iso:"DE"},
+      {name:"Royaume-Uni", iso:"GB"}, {name:"États-Unis", iso:"US"}, {name:"Portugal", iso:"PT"},
+      {name:"Algérie", iso:"DZ"}, {name:"Maroc", iso:"MA"}, {name:"Canada", iso:"CA"},
+      {name:"Russie", iso:"RU"}, {name:"Россия", iso:"RU"}, {name:"Russie 1", iso:"RU"},
+      {name:"Russie 24", iso:"RU"}, {name:"Русский", iso:"RU"}, {name:"Türkiye", iso:"TR"},
+      {name:"Turquie", iso:"TR"}, {name:"Roumanie", iso:"RO"}, {name:"Pays-Bas", iso:"NL"},
+      {name:"Suède", iso:"SE"}, {name:"Norvège", iso:"NO"}, {name:"Finlande", iso:"FI"},
+      {name:"Grèce", iso:"GR"}, {name:"Ukraine", iso:"UA"}, {name:"Bulgarie", iso:"BG"},
+      {name:"Hongrie", iso:"HU"}, {name:"Japon", iso:"JP"}, {name:"Chine", iso:"CN"},
+      {name:"Tunisie", iso:"TN"}, {name:"Cameroun", iso:"CM"}, {name:"Sénégal", iso:"SN"},
+      {name:"Paraguay", iso:"PY"}
+    ];
+
+    function parsePlaylist(content) {
+      const allBlocks = [];
+      const lines = content.split('\n').map(l => l.trim()).filter(Boolean);
+      for (let i = 0; i < lines.length; ) {
+        if (lines[i].startsWith('#EXTINF')) {
+          let extinf = lines[i];
+          let url = (i + 1 < lines.length) ? lines[i + 1] : '';
+          allBlocks.push({ extinf, url, type: 'EXTINF' });
+          i += 2; continue;
+        }
+        if (lines[i].startsWith('#EXT-X-STREAM-INF')) {
+          let extinf = lines[i];
+          let url = (i + 1 < lines.length) ? lines[i + 1] : '';
+          allBlocks.push({ extinf, url, type: 'STREAM-INF' });
+          i += 2; continue;
+        }
+        if (lines[i].startsWith('#EXT-X-MEDIA')) {
+          let extinf = lines[i];
+          let url = (i + 1 < lines.length && !lines[i + 1].startsWith('#')) ? lines[i + 1] : '';
+          allBlocks.push({ extinf, url, type: 'MEDIA' });
+          i += url ? 2 : 1; continue;
+        }
+        i++;
+      }
+      return allBlocks;
+    }
+    function typeLabelHTML(type) {
+      if (type === 'EXTINF') return '<span class="block-type-label type-extinf">EXTINF</span>';
+      if (type === 'STREAM-INF') return '<span class="block-type-label type-stream">HLS</span>';
+      if (type === 'MEDIA') return '<span class="block-type-label type-media">MEDIA</span>';
+      return '';
+    }
+
+    // IMPORT MULTI-FICHIERS
+    document.getElementById('importBtn').onclick = function() {
+      if (!lastFileInput || !lastFileInput.files || !lastFileInput.files.length) { alert('Aucun fichier sélectionné'); return; }
+      let files = lastFileInput.files;
+      let allNewBlocks = [];
+      let filesRead = 0;
+      for (let i = 0; i < files.length; i++) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          let content = e.target.result;
+          let parsed = parsePlaylist(content);
+          allNewBlocks = allNewBlocks.concat(parsed);
+          filesRead++;
+          if (filesRead === files.length) {
+            visibleBlocks = allNewBlocks;
+            idMap = buildIdMap(visibleBlocks);
+            updateGroupsUI();
+            updateFileContent();
+            showSuccess("✅ Tous les fichiers importés et fusionnés !");
+          }
+        };
+        reader.readAsText(files[i], "UTF-8");
+      }
+    };
+
+    function buildIdMap(blocks) {
+      let idMap = {};
+      blocks.forEach((block, idx) => {
+        let extinf = block.extinf || "";
+        let pays = null, iso = null;
+        for (const c of countryISO) {
+          if (extinf.toLowerCase().includes(c.name.toLowerCase())) {
+            pays = c.name; iso = c.iso; break;
+          }
+        }
+        let tvgid = /tvg-id="([^"]+)"/i.exec(extinf);
+        let label = /#EXTINF.*?,([^(\n]+)/i.exec(extinf);
+        idMap[idx] = {
+          pays: pays,
+          iso: iso,
+          tvgid: tvgid ? tvgid[1] : null,
+          label: label ? label[1].trim() : null
+        };
+      });
+      return idMap;
+    }
+
+    function groupBlocks() {
+      let pays = {}, tvgids = {}, labels = {};
+      visibleBlocks.forEach((b, idx) => {
+        let data = idMap[idx] || {};
+        if (currentISOs.length > 0 && (!data.iso || !currentISOs.includes(data.iso))) return;
+        if (data.pays)  { if (!pays[data.pays]) pays[data.pays] = []; pays[data.pays].push({block: b, idx}); }
+        if (data.tvgid) { if (!tvgids[data.tvgid]) tvgids[data.tvgid] = []; tvgids[data.tvgid].push({block: b, idx}); }
+        if (data.label) { if (!labels[data.label]) labels[data.label] = []; labels[data.label].push({block: b, idx}); }
+      });
+      return {pays, tvgids, labels};
+    }
+    function highlight(str, search) {
+      if (!search) return str;
+      let re = new RegExp("("+search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')+")", "gi");
+      return str.replace(re, '<span class="highlight">$1</span>');
+    }
+
+    function updateGroupsUI() {
+      const { pays, tvgids, labels } = groupBlocks();
+      let search = currentUnifiedSearch ? currentUnifiedSearch : "";
+      let cDiv = document.getElementById('countriesList');
+      cDiv.innerHTML = '';
+      Object.keys(pays).sort().forEach(p => {
+        let showGroup = (!search || p.toLowerCase().includes(search) || pays[p].some(({ block, idx }) => {
+          let d = idMap[idx] || {};
+          return (d.tvgid && d.tvgid.toLowerCase().includes(search)) ||
+            (d.label && d.label.toLowerCase().includes(search)) ||
+            (block.extinf && block.extinf.toLowerCase().includes(search)) ||
+            (block.url && block.url.toLowerCase().includes(search));
+        }));
+        if (!showGroup) return;
+        let gBtn = document.createElement('button');
+        gBtn.className = 'btn btn-country btn-group';
+        gBtn.innerHTML = `Supprimer tout`;
+        gBtn.onclick = () => { removeGroup('pays', p); };
+        cDiv.appendChild(gBtn);
+        pays[p].forEach(({ block, idx }) => {
+          let chaine = block.extinf.match(/#EXTINF.*?,([^\n]+)/i)?.[1] || block.extinf;
+          let b = document.createElement('button');
+          b.className = 'btn btn-country';
+          b.innerHTML =
+            typeLabelHTML(block.type) +
+            highlight(chaine, search) +
+            ' <span class="trash" title="Supprimer cette chaîne">🗑</span>';
+          b.onclick = () => { removeOne(idx); };
+          cDiv.appendChild(b);
+        });
+      });
+      let tDiv = document.getElementById('tvgidsList');
+      tDiv.innerHTML = '';
+      Object.keys(tvgids).sort().forEach(id => {
+        let showGroup = (!search || id.toLowerCase().includes(search) || tvgids[id].some(({ block, idx }) => {
+          let d = idMap[idx] || {};
+          return (d.pays && d.pays.toLowerCase().includes(search)) ||
+            (d.label && d.label.toLowerCase().includes(search)) ||
+            (block.extinf && block.extinf.toLowerCase().includes(search)) ||
+            (block.url && block.url.toLowerCase().includes(search));
+        }));
+        if (!showGroup) return;
+        let gBtn = document.createElement('button');
+        gBtn.className = 'btn btn-tvgid btn-group';
+        gBtn.innerHTML = `Supprimer tout`;
+        gBtn.onclick = () => { removeGroup('tvgid', id); };
+        tDiv.appendChild(gBtn);
+        tvgids[id].forEach(({ block, idx }) => {
+          let label = idMap[idx].label || "[chaîne]";
+          let b = document.createElement('button');
+          b.className = 'btn btn-tvgid';
+          b.innerHTML =
+            typeLabelHTML(block.type) +
+            highlight(label, search) +
+            ' <span class="trash" title="Supprimer cette chaîne">🗑</span>';
+          b.onclick = () => { removeOne(idx); };
+          tDiv.appendChild(b);
+        });
+      });
+      let lDiv = document.getElementById('labelsList');
+      lDiv.innerHTML = '';
+      Object.keys(labels).sort().forEach(lab => {
+        let showGroup = (!search || lab.toLowerCase().includes(search) || labels[lab].some(({ block, idx }) => {
+          let d = idMap[idx] || {};
+          return (d.pays && d.pays.toLowerCase().includes(search)) ||
+            (d.tvgid && d.tvgid.toLowerCase().includes(search)) ||
+            (block.extinf && block.extinf.toLowerCase().includes(search)) ||
+            (block.url && block.url.toLowerCase().includes(search));
+        }));
+        if (!showGroup) return;
+        let gBtn = document.createElement('button');
+        gBtn.className = 'btn btn-label btn-group';
+        gBtn.innerHTML = `Supprimer tout`;
+        gBtn.onclick = () => { removeGroup('label', lab); };
+        lDiv.appendChild(gBtn);
+        labels[lab].forEach(({ block, idx }) => {
+          let b = document.createElement('button');
+          b.className = 'btn btn-label';
+          b.innerHTML =
+            typeLabelHTML(block.type) +
+            highlight(lab, search) +
+            ' <span class="trash" title="Supprimer cette chaîne">🗑</span>';
+          b.onclick = () => { removeOne(idx); };
+          lDiv.appendChild(b);
+        });
+      });
+    }
+
+    function updateFileContent() {
+      let linesArr = [];
+      let extinfNum = 1;
+      let blocks = visibleBlocks;
+      let count = 0;
+      let search = currentUnifiedSearch ? currentUnifiedSearch : "";
+      let filtered = blocks.filter((b, idx) => {
+        let data = idMap[idx] || {};
+        if (currentISOs.length > 0 && (!data.iso || !currentISOs.includes(data.iso))) return false;
+        let txt = (b.extinf + '\n' + b.url).toLowerCase();
+        if (search && txt.indexOf(search) === -1) {
+          return false;
+        }
+        return true;
+      });
+      if (filtered.length) {
+        filtered.forEach((b, i) => {
+          // Gestion musique : extrait titre/durée
+          let extinfData = b.extinf.match(/^#EXTINF:([^,]*),(.*)$/i);
+          let duration = extinfData ? extinfData[1] : '';
+          let musicTitle = extinfData ? extinfData[2] : '';
+          linesArr.push(
+            `<div class="line-editable" data-block="${i}" data-type="extinf" data-idx="${i}">
+              <span class="line-num">
+                ${extinfNum}
+                <span class="trash" title="Supprimer cette ligne" onclick="event.stopPropagation(); removeLine(${i});">🗑</span>
+              </span>
+              ${typeLabelHTML(b.type)}
+              <span class="line-content">${highlight(b.extinf, search)}</span>
+              ${b.type === "EXTINF" && musicTitle ? `<span style="color:#fed85a;margin-left:12px;">🎵 ${musicTitle} <em style="color:#90caf9;">${duration ? '('+duration+'s)' : ''}</em></span>` : ""}
+            </div>`);
+          linesArr.push(
+            `<div class="line-editable line-url" data-block="${i}" data-type="url" data-idx="${i}">
+              <span class="line-content">${highlight(b.url, search)}</span>
+            </div>`);
+          extinfNum++;
+          count++;
+        });
+      }
+      document.getElementById('lineCount').textContent = `Chaînes (EXTINF/HLS) : ${count}`;
+      document.getElementById('fileContent').innerHTML = linesArr.join('');
+      document.querySelectorAll('.line-editable').forEach(div => {
+        div.onclick = function(e) {
+          if (this.classList.contains('editing')) return;
+          editLineInline(this, filtered);
+        };
+      });
+    }
+
+    function editLineInline(div, filteredArr) {
+      div.classList.add('editing');
+      let contentSpan = div.querySelector('.line-content');
+      let oldText = contentSpan.textContent;
+      let input = document.createElement('input');
+      input.type = 'text';
+      input.value = oldText;
+      input.className = 'input-edit edit-large';
+      input.onkeydown = function(e) {
+        if (e.key === 'Enter') { saveEdit(); }
+        if (e.key === 'Escape') { cancelEdit(); }
+      };
+      input.onblur = function() { saveEdit(); };
+      contentSpan.innerHTML = '';
+      contentSpan.appendChild(input);
+      input.focus();
+      input.select();
+      function saveEdit() {
+        let newText = input.value;
+        contentSpan.textContent = newText;
+        div.classList.remove('editing');
+        let i = parseInt(div.dataset.idx);
+        let block = filteredArr ? filteredArr[i] : visibleBlocks[i];
+        if (div.dataset.type === 'extinf') block.extinf = newText;
+        if (div.dataset.type === 'url')    block.url = newText;
+        idMap = buildIdMap(visibleBlocks);
+        updateGroupsUI();
+        updateFileContent();
+      }
+      function cancelEdit() {
+        contentSpan.textContent = oldText;
+        div.classList.remove('editing');
+      }
+    }
+
+    function removeGroup(type, value) {
+      visibleBlocks = visibleBlocks.filter((b, idx) => {
+        let data = idMap[idx] || {};
+        if (type === 'pays')   return data.pays !== value;
+        if (type === 'tvgid')  return data.tvgid !== value;
+        if (type === 'label')  return data.label !== value;
+        return true;
+      });
+      idMap = buildIdMap(visibleBlocks);
+      updateGroupsUI();
+      updateFileContent();
+    }
+    function removeOne(idx) {
+      visibleBlocks.splice(idx, 1);
+      idMap = buildIdMap(visibleBlocks);
+      updateGroupsUI();
+      updateFileContent();
+    }
+    function removeByKeywords() {
+      let arr = document.getElementById('keywordsInput').value.split(',').map(s => s.trim()).filter(Boolean);
+      if (!arr.length) {
+        alert("Aucun mot-clé dans la zone. Rien à supprimer.");
+        return;
+      }
+      visibleBlocks = visibleBlocks.filter(b => {
+        let txt = (b.extinf + '\n' + b.url).toLowerCase();
+        return !arr.some(k => txt.includes(k.toLowerCase()));
+      });
+      idMap = buildIdMap(visibleBlocks);
+      document.getElementById('keywordsInput').value = '';
+      updateGroupsUI();
+      updateFileContent();
+    }
+    function showSuccess(msg) {
+      const div = document.getElementById('successMsg');
+      div.textContent = msg;
+      div.style.display = 'block';
+      setTimeout(() => { div.style.display = 'none'; }, 3000);
+    }
+    document.getElementById('resetBtn').onclick = function() {
+      visibleBlocks = [];
+      idMap = {};
+      if(lastFileInput) lastFileInput.value = "";
+      document.getElementById('fileList').innerHTML = "";
+      updateGroupsUI();
+      updateFileContent();
+      document.getElementById('keywordsInput').value = "";
+      document.getElementById('successMsg').style.display = "none";
+      document.getElementById('unifiedSearchInput').value = "";
+      currentUnifiedSearch = "";
+    };
+    document.getElementById('mergeBtn').onclick = function() {
+      let filtered = visibleBlocks;
+      if (!filtered.length) { alert('Aucun contenu à fusionner'); return; }
+      const blob = new Blob([filtered.map(b => b.extinf+'\n'+b.url).join('\n')], {type:'text/plain;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'fusion.m3u';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showSuccess("✅ Le fichier fusionné a été enregistré (fusion.m3u)");
+    };
+   // document.getElementById('cleanByKeyBtn').onclick = removeByKeywords;
+    /*document.getElementById('unifiedSearchInput').addEventListener('input', function() {
+      currentUnifiedSearch = this.value.trim().toLowerCase();
+      updateGroupsUI();
+      updateFileContent();
+    });*/
+    document.getElementById('toggleAutoSave').onclick = function() {
+      autoSave = !autoSave;
+      let btns = [this, document.getElementById('toggleAutoSave2')];
+      btns.forEach(btn=>{
+        if (!btn) return;
+        if (autoSave) { btn.className = "btn-save on"; btn.textContent = "Sauvegarde auto : ON"; }
+        else { btn.className = "btn-save"; btn.textContent = "Sauvegarde auto : OFF"; }
+      });
+      // autoSaveFile(); // tu peux ajouter l'autosave ici si tu veux
+    };
+
+    // Initialisation
+    updateGroupsUI();
+    updateFileContent();
+
+  </script>
+</body>
+</html>
